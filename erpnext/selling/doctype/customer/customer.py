@@ -34,18 +34,13 @@ class Customer(TransactionBase):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
-		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import (
-			AllowedToTransactWith,
-		)
+		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import AllowedToTransactWith
 		from erpnext.accounts.doctype.party_account.party_account import PartyAccount
 		from erpnext.selling.doctype.customer_credit_limit.customer_credit_limit import CustomerCreditLimit
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
-		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import (
-			SupplierNumberAtCustomer,
-		)
+		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import SupplierNumberAtCustomer
 		from erpnext.utilities.doctype.portal_user.portal_user import PortalUser
+		from frappe.types import DF
 
 		account_manager: DF.Link | None
 		accounts: DF.Table[PartyAccount]
@@ -68,6 +63,7 @@ class Customer(TransactionBase):
 		email_id: DF.ReadOnly | None
 		first_name: DF.ReadOnly | None
 		gender: DF.Link | None
+		id_no: DF.Int
 		image: DF.AttachImage | None
 		industry: DF.Link | None
 		is_frozen: DF.Check
@@ -440,7 +436,18 @@ class Customer(TransactionBase):
 					frappe.bold(self.customer_name)
 				)
 			)
+ 
 
+	def before_insert(self):
+			if not self.id_no:
+				last_no = frappe.db.sql("""
+					SELECT MAX(CAST(id_no AS UNSIGNED))
+					FROM `tabCustomer`
+					WHERE id_no IS NOT NULL
+				""")[0][0]
+
+				self.id_no = (last_no or 0) + 1	
+				
 
 @frappe.whitelist()
 def make_quotation(source_name, target_doc=None):

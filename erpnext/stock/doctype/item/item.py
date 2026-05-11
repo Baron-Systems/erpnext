@@ -60,8 +60,7 @@ class Item(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
+		from erpnext.selling.doctype.child_item_price.child_item_price import childitemprice
 		from erpnext.stock.doctype.item_barcode.item_barcode import ItemBarcode
 		from erpnext.stock.doctype.item_customer_detail.item_customer_detail import ItemCustomerDetail
 		from erpnext.stock.doctype.item_default.item_default import ItemDefault
@@ -70,6 +69,7 @@ class Item(Document):
 		from erpnext.stock.doctype.item_tax.item_tax import ItemTax
 		from erpnext.stock.doctype.item_variant_attribute.item_variant_attribute import ItemVariantAttribute
 		from erpnext.stock.doctype.uom_conversion_detail.uom_conversion_detail import UOMConversionDetail
+		from frappe.types import DF
 
 		allow_alternative_item: DF.Check
 		allow_negative_stock: DF.Check
@@ -88,9 +88,7 @@ class Item(Document):
 		default_bom: DF.Link | None
 		default_item_manufacturer: DF.Link | None
 		default_manufacturer_part_no: DF.Data | None
-		default_material_request_type: DF.Literal[
-			"Purchase", "Material Transfer", "Material Issue", "Manufacture", "Customer Provided"
-		]
+		default_material_request_type: DF.Literal["Purchase", "Material Transfer", "Material Issue", "Manufacture", "Customer Provided"]
 		delivered_by_supplier: DF.Check
 		description: DF.TextEditor | None
 		disabled: DF.Check
@@ -142,6 +140,7 @@ class Item(Document):
 		standard_rate: DF.Currency
 		stock_uom: DF.Link
 		supplier_items: DF.Table[ItemSupplier]
+		table_orim: DF.Table[childitemprice]
 		taxes: DF.Table[ItemTax]
 		total_projected_qty: DF.Float
 		uoms: DF.Table[UOMConversionDetail]
@@ -192,6 +191,10 @@ class Item(Document):
 		if self.opening_stock:
 			self.set_opening_stock()
 
+        	# Sync table_prmp with Item Price records
+		self.sync_table_prmp_to_item_price()
+
+
 	def validate(self):
 		if not self.item_name:
 			self.item_name = self.item_code
@@ -233,7 +236,9 @@ class Item(Document):
 	def on_update(self):
 		self.update_variants()
 		self.update_item_price()
-
+			# Sync table_orim with Item Price records
+		self.sync_table_orim_to_item_price()
+		
 	def validate_description(self):
 		"""Clean HTML description if set"""
 		if (
@@ -617,6 +622,77 @@ class Item(Document):
 				item_code=self.name,
 			),
 		)
+
+	def sync_table_orim_to_item_price(self):
+		"""Sync table_orim entries with Item Price records"""
+		# Prevent infinite loop when syncing from Item Price
+		if hasattr(frappe.local, 'skip_table_orim_sync') and frappe.local.skip_table_orim_sync:
+			return
+			
+		if not self.get("table_orim"):
+			# If table_orim is empty, remove all Item Price records created through this table
+			self.cleanup_orphaned_item_prices()
+			return
+			
+		# Get current table_orim combinations
+		current_combinations = set()
+		for row in self.table_orim:
+			if row.get("price_list") and row.get("uom"):
+				combination = (row.price_list, row.uom)
+				current_combinations.add(combination)
+				
+				if row.get("rate"):
+					# Check if Item Price already exists
+					existing_price = frappe.db.exists("Item Price", {
+						"item_code": self.name,
+						"price_list": row.price_list,
+						"uom": row.uom
+					})
+					
+					if not existing_price:
+						# Create new Item Price record
+						item_price = frappe.get_doc({
+							"doctype": "Item Price",
+							"item_code": self.name,
+							"item_name": self.item_name,
+							"item_description": self.description,
+							"brand": self.brand,
+							"price_list": row.price_list,
+							"uom": row.uom,
+							"price_list_rate": row.rate,
+							"currency": erpnext.get_default_currency() or frappe.db.get_default("currency"),
+							"selling": 1,
+							"buying": 1
+						})
+						item_price.insert(ignore_permissions=True)
+					else:
+						# Update existing Item Price record
+						frappe.db.set_value("Item Price", existing_price, "price_list_rate", row.rate)
+						frappe.db.set_value("Item Price", existing_price, "item_name", self.item_name)
+						frappe.db.set_value("Item Price", existing_price, "item_description", self.description)
+						frappe.db.set_value("Item Price", existing_price, "brand", self.brand)
+		
+		# Clean up Item Price records that are no longer in table_prmp
+		self.cleanup_orphaned_item_prices(current_combinations)
+	
+	def cleanup_orphaned_item_prices(self, current_combinations=None):
+		"""Remove Item Price records that are not in current table_prmp"""
+		if current_combinations is None:
+			current_combinations = set()
+			
+		# Get all Item Price records for this item
+		existing_prices = frappe.db.get_all("Item Price", 
+			filters={"item_code": self.name},
+			fields=["name", "price_list", "uom"]
+		)
+		
+		for price in existing_prices:
+			combination = (price.price_list, price.uom)
+			if combination not in current_combinations:
+				# This Item Price record is not in table_prmp, delete it
+				frappe.delete_doc("Item Price", price.name, ignore_permissions=True)
+
+
 
 	def on_trash(self):
 		frappe.db.sql("""delete from tabBin where item_code=%s""", self.name)

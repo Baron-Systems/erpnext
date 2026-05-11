@@ -125,6 +125,15 @@
   "total_billing_hours",
   "column_break_106",
   "total_billing_amount",
+  "more_information",
+  "status",
+  "remarks",
+  "customer_group",
+  "column_break_imbx",
+  "is_internal_customer",
+  "represents_company",
+  "inter_company_invoice_reference",
+  "is_discounted",
   "payments_tab",
   "payments_section",
   "cash_bank_account",
@@ -230,15 +239,6 @@
   "column_break_ixxw",
   "utm_campaign",
   "utm_content",
-  "more_information",
-  "status",
-  "remarks",
-  "customer_group",
-  "column_break_imbx",
-  "is_internal_customer",
-  "represents_company",
-  "inter_company_invoice_reference",
-  "is_discounted",
   "connections_tab"
  ],
  "fields": [
@@ -716,7 +716,7 @@
    "options": "fa fa-shopping-cart"
   },
   {
-   "default": "0",
+   "default": "1",
    "depends_on": "eval:doc.items.every((item) => !item.dn_detail)",
    "fieldname": "update_stock",
    "fieldtype": "Check",
@@ -796,6 +796,7 @@
    "collapsible_depends_on": "eval:doc.total_billing_amount > 0 || doc.total_billing_hours > 0",
    "fieldname": "time_sheet_list",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1,
@@ -896,6 +897,7 @@
   {
    "fieldname": "taxes_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1,
@@ -942,6 +944,7 @@
   {
    "fieldname": "section_break_40",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1
@@ -960,6 +963,7 @@
    "collapsible": 1,
    "fieldname": "sec_tax_breakup",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Tax Breakup"
@@ -978,6 +982,7 @@
   {
    "fieldname": "section_break_43",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1
   },
@@ -2234,6 +2239,7 @@
    "depends_on": "eval: doc.apply_tds",
    "fieldname": "section_tax_withholding_entry",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Tax Withholding Entry"
   },
   {
@@ -2274,6 +2280,7 @@
   {
    "fieldname": "base_totals_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Totals (Company Currency)",
    "options": "Company:company:default_currency"
   },
