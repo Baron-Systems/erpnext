@@ -19,6 +19,7 @@
   "customer_group",
   "territory",
   "image",
+  "id_no",
   "defaults_tab",
   "default_currency",
   "default_bank_account",
@@ -129,7 +130,7 @@
    "options": "Gender"
   },
   {
-   "default": "Company",
+   "default": "Individual",
    "fieldname": "customer_type",
    "fieldtype": "Select",
    "label": "Customer Type",
@@ -627,6 +628,15 @@
    "fieldname": "supplier_numbers_section",
    "fieldtype": "Section Break",
    "label": "Supplier Numbers"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "id_no",
+   "fieldtype": "Int",
+   "label": "ID NO",
+   "length": 10,
+   "non_negative": 1,
+   "unique": 1
   }
  ],
  "icon": "fa fa-user",
@@ -640,7 +650,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2026-03-09 17:15:26.040050",
+ "modified": "2026-05-10 18:01:58.939691",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

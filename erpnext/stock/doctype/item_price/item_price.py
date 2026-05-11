@@ -155,3 +155,75 @@ class ItemPrice(Document):
 		if self.buying and not self.selling:
 			# if only buying then remove customer
 			self.customer = None
+
+			
+	def after_insert(self):
+		"""Sync new Item Price to table_orim in Item"""
+		self.sync_to_table_orim()
+
+	def on_update(self):
+		"""Sync updated Item Price to table_orim in Item"""
+		self.sync_to_table_orim()
+
+	def on_trash(self):
+		"""Remove corresponding entry from table_orim when Item Price is deleted"""
+		self.remove_from_table_orim()
+
+	def sync_to_table_orim(self):
+		"""Sync this Item Price to table_orim in the related Item"""
+		try:
+			# Set flag to prevent infinite loop
+			frappe.local.skip_table_orim_sync = True
+			
+			item_doc = frappe.get_doc("Item", self.item_code)
+			
+			# Check if this combination already exists in table_orim
+			existing_row = None
+			for row in item_doc.get("table_orim", []):
+				if row.get("price_list") == self.price_list and row.get("uom") == self.uom:
+					existing_row = row
+					break
+			
+			if existing_row:
+				# Update existing row
+				existing_row.rate = self.price_list_rate
+			else:
+				# Add new row
+				item_doc.append("table_orim", {
+					"price_list": self.price_list,
+					"uom": self.uom,
+					"rate": self.price_list_rate
+				})
+			
+			item_doc.save(ignore_permissions=True)
+			
+		except Exception as e:
+			frappe.log_error(f"Error syncing Item Price {self.name} to table_orim: {e}")
+		finally:
+			# Clear the flag
+			if hasattr(frappe.local, 'skip_table_orim_sync'):
+				delattr(frappe.local, 'skip_table_orim_sync')
+
+	def remove_from_table_orim(self):
+		"""Remove this Item Price from table_orim in the related Item"""
+		try:
+			# Set flag to prevent infinite loop
+			frappe.local.skip_table_orim_sync = True
+			
+			item_doc = frappe.get_doc("Item", self.item_code)
+			
+			# Find and remove the corresponding row
+			rows_to_keep = []
+			for row in item_doc.get("table_orim", []):
+				if not (row.get("price_list") == self.price_list and row.get("uom") == self.uom):
+					rows_to_keep.append(row)
+			
+			item_doc.table_orim = rows_to_keep
+			item_doc.save(ignore_permissions=True)
+			
+		except Exception as e:
+			frappe.log_error(f"Error removing Item Price {self.name} from table_orim: {e}")
+		finally:
+			# Clear the flag
+			if hasattr(frappe.local, 'skip_table_orim_sync'):
+				delattr(frappe.local, 'skip_table_orim_sync')
