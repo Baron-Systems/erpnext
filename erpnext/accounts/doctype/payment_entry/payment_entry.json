@@ -19,23 +19,15 @@
   "party_type",
   "party",
   "party_name",
+  "bank_account",
   "book_advance_payments_in_separate_party_account",
   "reconcile_on_advance_payment_date",
   "apply_tds",
   "tax_withholding_category",
   "column_break_11",
-  "bank_account",
-  "party_bank_account",
   "contact_person",
+  "party_bank_account",
   "contact_email",
-  "payment_accounts_section",
-  "paid_from",
-  "paid_from_account_type",
-  "paid_from_account_currency",
-  "column_break_18",
-  "paid_to",
-  "paid_to_account_type",
-  "paid_to_account_currency",
   "payment_amounts_section",
   "paid_amount",
   "paid_amount_after_tax",
@@ -59,6 +51,14 @@
   "unallocated_amount",
   "difference_amount",
   "write_off_difference_amount",
+  "payment_accounts_section",
+  "paid_from",
+  "paid_from_account_type",
+  "paid_from_account_currency",
+  "column_break_18",
+  "paid_to",
+  "paid_to_account_type",
+  "paid_to_account_currency",
   "taxes_and_charges_section",
   "purchase_taxes_and_charges_template",
   "sales_taxes_and_charges_template",
@@ -159,6 +159,7 @@
    "options": "Cost Center"
   },
   {
+   "default": "Cash",
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
    "label": "Mode of Payment",
@@ -194,6 +195,7 @@
    "depends_on": "eval:in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.party_type",
    "fieldname": "party_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_global_search": 1,
    "label": "Party Name"
   },
@@ -205,6 +207,7 @@
    "depends_on": "eval: doc.party && doc.party_type !== \"Employee\"",
    "fieldname": "contact_person",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Contact",
    "options": "Contact"
   },
@@ -212,6 +215,7 @@
    "depends_on": "eval: (doc.contact_person || doc.party_type === \"Employee\") && doc.contact_email",
    "fieldname": "contact_email",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Email",
    "options": "Email",
    "read_only": 1
@@ -534,6 +538,7 @@
    "depends_on": "party",
    "fieldname": "bank_account",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Company Bank Account",
    "options": "Bank Account"
   },
@@ -541,6 +546,7 @@
    "depends_on": "party",
    "fieldname": "party_bank_account",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Party Bank Account",
    "options": "Bank Account"
   },
@@ -582,6 +588,7 @@
    "depends_on": "eval:doc.apply_tds",
    "fieldname": "tax_withholding_category",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Tax Withholding Category",
    "mandatory_depends_on": "eval:doc.apply_tds",
    "options": "Tax Withholding Category"
@@ -589,6 +596,7 @@
   {
    "fieldname": "taxes_and_charges_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "label": "Taxes and Charges"
   },
@@ -692,6 +700,7 @@
    "depends_on": "eval:doc.docstatus==0",
    "fieldname": "get_outstanding_orders",
    "fieldtype": "Button",
+   "hidden": 1,
    "label": "Get Outstanding Orders"
   },
   {
@@ -699,6 +708,7 @@
    "fetch_from": "company.book_advance_payments_in_separate_party_account",
    "fieldname": "book_advance_payments_in_separate_party_account",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Book Advance Payments in Separate Party Account",
    "no_copy": 1,
    "read_only": 1
@@ -742,6 +752,7 @@
    "depends_on": "eval:doc.party_type == 'Supplier'",
    "fieldname": "apply_tds",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Consider for Tax Withholding"
   },
   {
@@ -795,7 +806,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2026-03-09 17:15:30.453920",
+ "modified": "2026-05-11 14:40:44.902652",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
