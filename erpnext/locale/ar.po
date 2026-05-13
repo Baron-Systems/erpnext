@@ -57066,3 +57066,9 @@ msgstr "الاستاذ(الموردين)"
 msgid "Sales Register"
 msgstr "سجل المبيعات"
 
+msgid "Accounts Setup"
+msgstr "مدير الحسابات"
+
+msgid "Selling"
+msgstr "المبيعات"
+

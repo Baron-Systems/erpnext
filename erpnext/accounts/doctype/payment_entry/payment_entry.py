@@ -14,7 +14,6 @@ from frappe.utils import cint, comma_or, flt, getdate, nowdate
 from frappe.utils.data import comma_and, fmt_money, get_link_to_form
 from pypika import Case
 from pypika.functions import Coalesce, Sum
-
 import erpnext
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
 from erpnext.accounts.doctype.bank_account.bank_account import (
@@ -67,18 +66,11 @@ class PaymentEntry(AccountsController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
-		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import (
-			AdvanceTaxesandCharges,
-		)
-		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import (
-			PaymentEntryDeduction,
-		)
-		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import (
-			PaymentEntryReference,
-		)
+		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import AdvanceTaxesandCharges
+		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import PaymentEntryDeduction
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
 		from erpnext.accounts.doctype.tax_withholding_entry.tax_withholding_entry import TaxWithholdingEntry
+		from frappe.types import DF
 
 		amended_from: DF.Link | None
 		apply_tds: DF.Check
@@ -953,8 +945,102 @@ class PaymentEntry(AccountsController):
 		self.set_amounts_in_company_currency()
 		self.set_total_allocated_amount()
 		self.set_unallocated_amount()
+		# ===== الكود الجديد: جلب الفواتير وتوزيعها تلقائياً =====
+		self.auto_fetch_and_allocate_invoices()
+		# ==================================================
 		self.set_exchange_gain_loss()
 		self.set_difference_amount()
+    
+	def auto_fetch_and_allocate_invoices(self):
+		"""
+		تقوم بجلب جميع الفواتير المعلقة تلقائياً وتوزيع المبلغ المدخل عليها.
+		"""
+		if self.docstatus != 0:
+			return
+
+		if self.payment_type == "Receive":
+			amount = self.received_amount
+		elif self.payment_type == "Pay":
+			amount = self.paid_amount
+		else:
+			return
+
+		if amount <= 0 or not self.party:
+			return
+
+		if self.references:
+			return
+
+		args = frappe._dict({
+			"party_type": self.party_type,
+			"party": self.party,
+			"company": self.company,
+			"party_account": self.party_account,
+			"posting_date": self.posting_date,
+			"get_outstanding_invoices": True,
+			"get_orders_to_be_billed": False,
+			"cost_center": self.cost_center,
+			"book_advance_payments_in_separate_party_account": self.book_advance_payments_in_separate_party_account,
+		})
+
+		outstanding_invoices = frappe.call('erpnext.accounts.doctype.payment_entry.payment_entry.get_outstanding_reference_documents', args, validate=False)
+
+		if not outstanding_invoices:
+			frappe.msgprint(
+				_("لا توجد فواتير مستحقة للطرف {0}.").format(frappe.bold(self.party)),
+				alert=True,
+				indicator="orange"
+			)
+			return
+
+		remaining_amount = amount
+		self.set('references', [])
+
+		invoices_count = len(outstanding_invoices)
+		allocated_count = 0
+
+		for inv in outstanding_invoices:
+			if remaining_amount > 0 and inv.outstanding_amount > 0:
+				allocated = min(remaining_amount, inv.outstanding_amount)
+				remaining_amount -= allocated
+				if allocated > 0:
+					allocated_count += 1
+			else:
+				allocated = 0
+
+			self.append('references', {
+				"reference_doctype": inv.voucher_type,
+				"reference_name": inv.voucher_no,
+				"due_date": inv.due_date,
+				"total_amount": inv.invoice_amount,
+				"outstanding_amount": inv.outstanding_amount,
+				"allocated_amount": allocated,
+				"bill_no": inv.get("bill_no", ""),
+				"exchange_rate": inv.exchange_rate,
+			})
+
+		self.set_total_allocated_amount()
+		self.set_unallocated_amount()
+		self.set_exchange_gain_loss()
+		self.set_difference_amount()
+
+		if self.references:
+			unallocated_text = ""
+			if remaining_amount > 0:
+				unallocated_text = _(" (تبقى {0} غير مخصصة)").format(frappe.bold(str(remaining_amount)))
+			elif remaining_amount < 0:
+				unallocated_text = _(" (المبلغ غير كافٍ لتغطية جميع الفواتير)")
+
+			frappe.msgprint(
+				_("تم جلب {0} فاتورة مستحقة. تم توزيع {1} على {2} فاتورة.{3}").format(
+					frappe.bold(str(invoices_count)),
+					frappe.bold(str(amount)),
+					frappe.bold(str(allocated_count)),
+					unallocated_text
+				),
+				alert=True,
+				indicator="green" if allocated_count > 0 else "orange"
+			)
 
 	def validate_amounts(self):
 		self.validate_received_amount()
