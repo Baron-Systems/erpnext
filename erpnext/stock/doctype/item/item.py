@@ -185,7 +185,7 @@ class Item(Document):
 			self.set_opening_stock()
 
         	# Sync table_prmp with Item Price records
-		self.sync_table_prmp_to_item_price()
+		self.sync_table_orim_to_item_price()
 
 
 	def validate(self):
