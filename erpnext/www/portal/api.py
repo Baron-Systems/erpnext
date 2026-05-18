@@ -229,22 +229,35 @@ def portal_get_csrf_token():
     This endpoint provides a safe fallback for our standalone portal pages.
     """
     try:
+        # First, try to get from session data directly (safest for guest)
+        session = getattr(frappe, "local", None) and getattr(frappe.local, "session", None)
+        if session:
+            token = getattr(session, "data", {}).get("csrf_token")
+            if token:
+                return token
+
+        # Second, try frappe.sessions.get_csrf_token
         try:
-            from frappe.sessions import get_csrf_token as _get_csrf_token  # type: ignore
-        except Exception:
-            _get_csrf_token = None
-
-        token = None
-        if _get_csrf_token:
+            from frappe.sessions import get_csrf_token as _get_csrf_token
             token = _get_csrf_token()
+            if token:
+                return token
+        except Exception:
+            pass
 
-        # Fallback to session stored token
-        if not token:
-            token = getattr(getattr(frappe, "local", None), "session", None)
-            token = getattr(getattr(token, "data", None), "csrf_token", None)
+        # Third, try to generate a new token if we have session
+        try:
+            if session and hasattr(session, 'data'):
+                from frappe.utils import generate_hash
+                token = generate_hash(10)
+                session.data.csrf_token = token
+                return token
+        except Exception:
+            pass
 
-        return token or ""
-    except Exception:
+        return ""
+    except Exception as e:
+        frappe.log_error(f"portal_get_csrf_token error: {str(e)}")
         return ""
 
 
@@ -646,6 +659,7 @@ def get_invoice_details(invoice_name):
             "success": True,
             "invoice": {
                 "name": invoice.name,
+                "customer_name": invoice.customer_name,
                 "posting_date": invoice.posting_date.strftime('%Y-%m-%d') if hasattr(invoice.posting_date, 'strftime') else str(invoice.posting_date),
                 "due_date": invoice.due_date.strftime('%Y-%m-%d') if hasattr(invoice.due_date, 'strftime') else str(invoice.due_date),
                 "grand_total": invoice.grand_total,
@@ -821,29 +835,22 @@ def get_manifest():
 def get_financial_dashboard(from_date=None, to_date=None, transaction_type=None, invoice_status=None):
     """Get comprehensive financial dashboard for customer"""
     customer_id = get_customer_from_request()
-    
+
     if not customer_id:
-        frappe.log_error("Financial Dashboard: No customer_id found in request")
+        frappe.log_error("Financial Dashboard: No customer_id found in request. Cookies: " + str(dict(frappe.request.cookies) if frappe.request else "no request"))
         return {
             "success": False,
-            "message": "غير مصرح لك بالوصول"
+            "message": "غير مصرح لك بالوصول - يرجى تسجيل الدخول مرة أخرى"
         }
-    
+
     try:
-        frappe.log_error(f"Financial Dashboard: Processing for customer {customer_id}")
+        frappe.log_error(f"Financial Dashboard: Processing for customer {customer_id}, filters: from={from_date}, to={to_date}, type={transaction_type}, status={invoice_status}")
         
-        # Get customer balance and credit limit
-        try:
-            credit_limit = flt(frappe.db.get_value("Customer", customer_id, "credit_limit") or 0)
-        except:
-            credit_limit = 100000  # Default credit limit if field doesn't exist
+        # Get actual balance from General Ledger (GL Entries) - Net Balance
+        # This is the REAL accounting balance from the customer's ledger
+        gl_balance = get_customer_balance(customer_id)
         
-        try:
-            outstanding_amount = flt(frappe.db.get_value("Customer", customer_id, "outstanding_amount") or 0)
-        except:
-            outstanding_amount = 0  # Default outstanding amount
-        
-        balance = credit_limit - outstanding_amount
+        frappe.log_error(f"Dashboard GL Balance for {customer_id}: gl_balance={gl_balance}")
         
         # Get invoices with filters
         invoice_filters = {"customer": customer_id, "docstatus": 1}
@@ -932,14 +939,17 @@ def get_financial_dashboard(from_date=None, to_date=None, transaction_type=None,
         # Get default currency
         currency = get_default_currency()
         
+        # Count invoices and payments after transaction_type filter
+        filtered_invoices = [t for t in transactions if t["type"] == "invoice"]
+        filtered_payments = [t for t in transactions if t["type"] == "payment"]
+        
         result = {
             "success": True,
-            "balance": flt(balance),
-            "credit_limit": flt(credit_limit),
-            "outstanding_amount": flt(outstanding_amount),
-            "total_invoices": len(invoices),  # Count of invoices, not amount
+            "balance": flt(gl_balance),  # Net balance from General Ledger (GL)
+            "invoices_count": len(filtered_invoices),  # Count after filters
+            "payments_count": len(filtered_payments),  # Count after filters
             "total_invoice_amount": total_invoices,  # Total amount of invoices
-            "total_payments": total_payments,
+            "total_payment_amount": total_payments,  # Total amount of payments
             "outstanding_invoices": outstanding_invoices,
             "paid_invoices": paid_invoices,
             "transactions": transactions,
@@ -950,7 +960,9 @@ def get_financial_dashboard(from_date=None, to_date=None, transaction_type=None,
         return result
         
     except Exception as e:
-        frappe.log_error(f"Financial Dashboard Error: {str(e)}")
+        import traceback
+        error_details = traceback.format_exc()
+        frappe.log_error(f"Financial Dashboard Error for customer {customer_id}: {str(e)}\n{error_details}")
         return {
             "success": False,
             "message": f"حدث خطأ أثناء جلب البيانات المالية: {str(e)}"

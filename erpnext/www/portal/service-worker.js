@@ -1,28 +1,34 @@
 /**
  * Service Worker for ABS Portal
- * Provides offline support and caching
+ * Provides offline support and advanced caching
+ * Version 3.0 - Modern Caching Strategy
  */
 
-const CACHE_NAME = 'abs-portal-v1';
-const STATIC_CACHE = 'abs-static-v1';
-const DYNAMIC_CACHE = 'abs-dynamic-v1';
+const CACHE_VERSION = 'v4';
+const STATIC_CACHE = `abs-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `abs-dynamic-${CACHE_VERSION}`;
+const IMAGE_CACHE = `abs-images-${CACHE_VERSION}`;
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
   '/portal/',
   '/portal/verify.html',
   '/portal/index.html',
-  '/portal/invoices.html',
-  '/portal/offers.html',
-  '/portal/account.html',
-  '/portal/new-order.html',
-  '/assets/erpnext/css/portal/style.css',
-  '/assets/erpnext/js/portal/common.js',
+  '/portal/style.css',
+  '/portal/common.js',
+  '/portal/install-prompt.js',
   '/portal/icon-192.png',
   '/portal/favicon.ico',
-  '/portal/manifest.json',
-  '/api/method/erpnext.www.portal.api.get_manifest'
+  '/portal/manifest.json'
 ];
+
+// Cache strategies
+const CACHE_STRATEGIES = {
+  static: 'cache-first',
+  dynamic: 'network-first',
+  api: 'network-only',
+  images: 'cache-first'
+};
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -39,7 +45,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and claim clients
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating...');
   
@@ -50,8 +56,7 @@ self.addEventListener('activate', (event) => {
           cacheNames
             .filter((name) => {
               return name.startsWith('abs-') && 
-                     name !== STATIC_CACHE && 
-                     name !== DYNAMIC_CACHE;
+                     !name.includes(CACHE_VERSION);
             })
             .map((name) => {
               console.log('[SW] Deleting old cache:', name);
@@ -60,6 +65,14 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => self.clients.claim())
+      .then(() => {
+        // Notify all clients that SW is active
+        return self.clients.matchAll({ type: 'window' }).then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: 'SW_ACTIVATED', version: CACHE_VERSION });
+          });
+        });
+      })
   );
 });
 
@@ -82,12 +95,16 @@ self.addEventListener('fetch', (event) => {
   if (isStaticAsset(url)) {
     event.respondWith(cacheFirst(request));
   }
+  // Image cache strategy
+  else if (isImageAsset(url)) {
+    event.respondWith(imageCacheStrategy(request));
+  }
   // Network First for dynamic content
   else if (isDynamicContent(url)) {
     event.respondWith(networkFirst(request));
   }
   // Handle missing assets gracefully
-  else if (url.pathname.includes('icon-192.png') || url.pathname.includes('favicon.ico')) {
+  else if (url.pathname.includes('icon') || url.pathname.includes('favicon')) {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) {
@@ -107,8 +124,16 @@ self.addEventListener('fetch', (event) => {
  * Check if URL is a static asset
  */
 function isStaticAsset(url) {
-  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ttf'];
+  const staticExtensions = ['.css', '.js', '.woff', '.woff2', '.ttf', '.otf'];
   return staticExtensions.some(ext => url.pathname.endsWith(ext));
+}
+
+/**
+ * Check if URL is an image asset
+ */
+function isImageAsset(url) {
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'];
+  return imageExtensions.some(ext => url.pathname.endsWith(ext));
 }
 
 /**
@@ -116,6 +141,38 @@ function isStaticAsset(url) {
  */
 function isDynamicContent(url) {
   return url.pathname.startsWith('/portal/') && url.pathname.endsWith('.html');
+}
+
+/**
+ * Image cache strategy - stale while revalidate
+ */
+async function imageCacheStrategy(request) {
+  const cache = await caches.open(IMAGE_CACHE);
+  const cached = await cache.match(request);
+  
+  // Return cached immediately if available
+  if (cached) {
+    // Update cache in background
+    fetch(request).then(response => {
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+    }).catch(() => {});
+    
+    return cached;
+  }
+  
+  // Otherwise fetch and cache
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.error('[SW] Image fetch failed:', error);
+    return new Response('', { status: 503 });
+  }
 }
 
 /**

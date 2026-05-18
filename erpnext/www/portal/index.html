@@ -2,23 +2,253 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1e3a8a">
+    <meta name="color-scheme" content="light">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="بوابة العملاء - متابعة الفواتير والأرصدة والمدفوعات">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="البوابة">
-    <title>لوحة التحكم المالي - بوابة العملاء</title>
-    <link rel="stylesheet" href="/portal/style.css?v=2">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ABS Portal">
+    <meta name="description" content="بوابة العملاء - متابعة الفواتير والأرصدة والمدفوعات">
+    <meta name="format-detection" content="telephone=no">
+    <title>لوحة التحكم - بوابة العملاء</title>
+    <link rel="stylesheet" href="/portal/style.css?v=4">
     <link rel="manifest" href="/api/method/erpnext.www.portal.api.get_manifest">
+    <link rel="apple-touch-icon" href="/portal/icon-192.png">
+    <!-- Dark Theme -->
     <style>
-        .dashboard-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+        :root {
+            color-scheme: dark;
+        }
+    </style>
+    
+    <!-- Auth Check - Redirect if not logged in -->
+    <script>
+        (async function() {
+            try {
+                const res = await fetch('/api/method/erpnext.www.portal.api.portal_me', {
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (!data.message || !data.message.success) {
+                    window.location.replace('/portal/verify');
+                }
+            } catch(e) {
+                window.location.replace('/portal/verify');
+            }
+        })();
+    </script>
+    <style>
+        /* Dark Theme - All Devices */
+        .main-content {
+            min-height: 100vh;
+            background: transparent;
+            padding: 2rem 0;
+        }
+
+        /* Dashboard Cards - Transparent Dark Style */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Balance Card - Dark Transparent with Gradient */
+        .balance-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 1.5rem 0;
-            margin-bottom: 1.5rem;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        /* Invoices Section - Dark Transparent Style */
+        .invoices-section {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 240;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 1rem);
+        }
+
+        .section-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+        }
+
+        .badge {
+            background: rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Invoice Items - Dark Theme */
+        .invoice-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 1.25rem;
             border-radius: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin: 0.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            color: white;
+        }
+
+        .invoice-item:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(148, 163, 184, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .invoice-number {
+            font-weight: 700;
+            color: #93c5fd;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .invoice-date {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            direction: ltr;
+            text-align: center;
+        }
+
+        .invoice-amount {
+            font-weight: 700;
+            color: #93c5fd;
+            font-size: 0.95rem;
+            text-align: center;
+            direction: ltr;
+        }
+
+        .invoice-remaining {
+            font-weight: 600;
+            color: #10b981;
+            font-size: 0.9rem;
+            text-align: center;
+            direction: ltr;
+        }
+
+        /* Transaction Tabs - Dark Style */
+        .transaction-tabs {
+            display: flex;
+            padding: 1rem;
+            gap: 0.75rem;
+            background: rgba(15, 23, 42, 0.4);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .tab-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.4);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(148, 163, 184, 0.4);
+            color: white;
+        }
+
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .tab-count {
+            background: rgba(255, 255, 255, 0.2);
+            color: inherit;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* Status Badges - Dark Theme */
+        .status-paid {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-unpaid {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-partial {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Dashboard Header - Keep Blue Gradient */
+        .dashboard-header {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 24px;
+            color: white;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
         .header-filters {
@@ -59,193 +289,145 @@
             gap: 0.5rem;
             margin-top: 1rem;
         }
-        
-        .dashboard-cards {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        @media (min-width: 768px) {
-            .dashboard-cards {
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 1.5rem;
-            }
-        }
-        
-        .balance-card {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .balance-amount {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-        
-        .balance-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-        
-        .balance-details {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .detail-item {
-            text-align: center;
-        }
-        
-        .detail-value {
-            font-size: 1.125rem;
-            font-weight: 600;
-        }
-        
-        .detail-label {
-            font-size: 0.75rem;
-            opacity: 0.8;
-        }
-        
+
+        /* Dark Theme for Summary Cards */
         .summary-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            color: white;
         }
-        
+
         .summary-title {
             font-size: 1.125rem;
             font-weight: 600;
-            color: #1f2937;
+            color: white;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .summary-stats {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
-        
+
         .stat-item {
             text-align: center;
             padding: 1rem;
             border-radius: 8px;
-            background: #f8fafc;
+            background: rgba(15, 23, 42, 0.4);
         }
-        
+
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1e3a8a;
+            color: #93c5fd;
         }
-        
+
         .stat-label {
             font-size: 0.875rem;
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.7);
             margin-top: 0.25rem;
         }
-        
+
+        /* Dark Transactions Table */
         .transactions-table {
-            background: white;
-            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
         
+        /* Dark Table Styles */
         .table-header {
-            background: #f8fafc;
+            background: rgba(15, 23, 42, 0.4);
             padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .table-title {
             font-size: 1.125rem;
             font-weight: 600;
-            color: #1f2937;
+            color: white;
         }
-        
+
         .table-container {
             overflow-x: auto;
             max-height: 400px;
             overflow-y: auto;
         }
-        
+
         @media (max-width: 768px) {
             .table-container {
                 max-height: 350px;
                 -webkit-overflow-scrolling: touch;
             }
-            
+
             th, td {
                 padding: 0.5rem 0.75rem;
                 font-size: 0.8rem;
             }
-            
+
             table {
                 font-size: 0.75rem;
             }
         }
-        
+
         @media (max-width: 480px) {
             .table-container {
                 max-height: 300px;
             }
-            
+
             th, td {
                 padding: 0.4rem;
                 font-size: 0.7rem;
             }
-            
+
             /* إخفاء بعض الأعمدة على الشاشات الصغيرة */
             th:nth-child(5),
             td:nth-child(5) {
                 display: none;
             }
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         th {
-            background: #f8fafc;
+            background: rgba(15, 23, 42, 0.6);
             padding: 0.75rem;
             text-align: right;
             font-weight: 600;
-            color: #374151;
+            color: rgba(255, 255, 255, 0.9);
             font-size: 0.875rem;
             position: sticky;
             top: 0;
             z-index: 10;
         }
-        
+
         td {
             padding: 0.75rem;
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
             font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
         }
-        
+
         tr:hover {
-            background: #f8fafc;
+            background: rgba(30, 41, 59, 0.4);
         }
-        
+
         .transaction-type {
             display: inline-block;
             padding: 0.25rem 0.5rem;
@@ -253,17 +435,17 @@
             font-size: 0.75rem;
             font-weight: 500;
         }
-        
+
         .type-invoice {
-            background: #dbeafe;
-            color: #1e40af;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
         }
-        
+
         .type-payment {
-            background: #d1fae5;
-            color: #065f46;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
         }
-        
+
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.5rem;
@@ -271,37 +453,22 @@
             font-size: 0.75rem;
             font-weight: 500;
         }
-        
-        .status-paid {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-unpaid {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .status-partial {
-            background: #fed7aa;
-            color: #92400e;
-        }
-        
+
         .amount {
             font-weight: 600;
-            color: #1e3a8a;
+            color: #93c5fd;
         }
-        
+
         .expandable-icon {
             cursor: pointer;
             margin-left: 8px;
             font-size: 0.8rem;
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.6);
             transition: transform 0.2s ease;
         }
-        
+
         .expandable-icon:hover {
-            color: #1e3a8a;
+            color: #93c5fd;
         }
         
         .invoice-details {
@@ -324,26 +491,28 @@
         }
         
         .loading-skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background: linear-gradient(90deg, rgba(30, 41, 59, 0.4) 25%, rgba(51, 65, 85, 0.6) 50%, rgba(30, 41, 59, 0.4) 75%);
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
         }
-        
+
         @keyframes loading {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
-        
+
         .skeleton-card {
             height: 120px;
             border-radius: 12px;
             margin-bottom: 1rem;
+            background: rgba(30, 41, 59, 0.4);
         }
-        
+
         .skeleton-row {
             height: 40px;
             margin-bottom: 0.5rem;
             border-radius: 4px;
+            background: rgba(30, 41, 59, 0.4);
         }
         
         /* Mobile Responsive */
@@ -410,18 +579,577 @@
                 max-height: 250px;
             }
         }
+        
+        .invoices-list {
+            padding: 0.5rem;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Invoice Item - Dark Theme */
+        .invoice-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin: 0.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            color: white;
+        }
+
+        .invoice-item:last-child {
+            margin-bottom: 1rem;
+        }
+
+        .invoice-item:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(148, 163, 184, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .invoice-item:active {
+            background: rgba(30, 41, 59, 0.9);
+            transition: all 0.1s ease;
+        }
+
+        .invoice-number {
+            font-weight: 700;
+            color: #93c5fd;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .invoice-date {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            direction: ltr;
+            text-align: center;
+        }
+
+        .invoice-amount {
+            font-weight: 700;
+            color: #93c5fd;
+            font-size: 0.95rem;
+            text-align: center;
+            direction: ltr;
+        }
+
+        .invoice-remaining {
+            font-weight: 600;
+            color: #10b981;
+            font-size: 0.9rem;
+            text-align: center;
+            direction: ltr;
+        }
+        
+        .invoice-status {
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        /* Status Badges - Dark Theme */
+        .status-paid {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-unpaid {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-partial {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        /* Modal Styles - Smooth & Elegant */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .modal.show .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content {
+            position: relative;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(30px) scale(0.95);
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.6);
+            gap: 0.75rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            font-family: monospace;
+            direction: ltr;
+            flex: 1;
+            width: 100%;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            padding: 1.25rem 1rem;
+            box-sizing: border-box;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(148, 163, 184, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(148, 163, 184, 0.3);
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 1.25rem 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .invoice-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 1rem;
+            border-radius: 12px;
+            width: calc(100% - 4rem);
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        .invoice-summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            text-align: center;
+            padding: 0.5rem;
+            border-left: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .invoice-summary-item:first-child {
+            border-left: none;
+        }
+
+        .invoice-summary-item .label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .invoice-summary-item .value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .text-primary { color: #2563eb; }
+        .text-success { color: #10b981; }
+        
+        .subsection-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 1rem 0;
+            text-align: center;
+        }
+
+        .items-table-container {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .invoice-items-section {
+            width: calc(100% - 4rem);
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .items-table th {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+
+        .items-table td {
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .btn-secondary {
+            background: #1f2937;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #374151;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .invoice-item {
+                grid-template-columns: 1fr auto auto;
+                gap: 0.75rem;
+                padding: 0.875rem;
+            }
+            
+            .invoice-item .invoice-date,
+            .invoice-item .invoice-remaining {
+                display: none;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-height: 90vh;
+                border-radius: 16px;
+            }
+
+            .modal-header {
+                padding: 1rem;
+                gap: 0.5rem;
+            }
+
+            .modal-title {
+                padding: 1rem 0.75rem;
+            }
+
+            .modal-body {
+                padding: 1rem 0.25rem;
+            }
+            
+            .invoice-summary {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                padding: 0.75rem;
+                width: calc(100% - 0.25rem);
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .invoice-items-section {
+                width: calc(100% - 0.25rem);
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .items-table-container {
+                overflow-x: hidden;
+            }
+
+            .items-table {
+                table-layout: fixed;
+            }
+            
+            .invoice-summary-item:nth-child(3) {
+                border-left: none;
+            }
+            
+            .items-table th,
+            .items-table td {
+                padding: 0.55rem 0.35rem;
+                font-size: 0.75rem;
+                white-space: normal;
+                word-break: break-word;
+                text-align: center;
+            }
+
+            .items-table th:first-child,
+            .items-table td:first-child {
+                text-align: right;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .invoices-list {
+                padding: 0.25rem;
+            }
+            
+            .invoice-item {
+                padding: 0.75rem;
+            }
+            
+            .invoice-number {
+                font-size: 0.8rem;
+            }
+            
+            .invoice-amount {
+                font-size: 0.85rem;
+            }
+            
+            .invoice-status {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Mobile Filter Bar - Integrated in AppBar */
+        .mobile-filter-bar {
+            display: none;
+            padding: 0.75rem 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .mobile-filters {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        /* Mobile Filter Bar - Modal Theme */
+        .mobile-filter-input {
+            flex: 1;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            color: white;
+            font-size: 0.85rem;
+            min-height: 40px;
+            font-weight: 500;
+        }
+
+        .mobile-filter-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .mobile-filter-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            color: #93c5fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-filter-btn:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(148, 163, 184, 0.5);
+        }
+
+        .mobile-filter-btn:active {
+            background: rgba(30, 41, 59, 0.9);
+        }
+        
+        /* Show mobile filter bar on small screens */
+        @media (max-width: 768px) {
+            .mobile-filter-bar {
+                display: block;
+            }
+            
+            .dashboard-header {
+                display: none;
+            }
+            
+            .main-content {
+                padding-top: 0;
+                padding-bottom: 80px; /* Space for fixed footer */
+            }
+            
+            /* Tabs - no sticky, normal flow */
+            .transaction-tabs {
+                position: relative;
+                z-index: 100;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .invoices-section {
+                position: fixed;
+                top: 160px;
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 80px;
+                max-height: none;
+                z-index: 240;
+                margin-bottom: 0;
+                display: flex !important;
+                flex-direction: column;
+            }
+
+            .invoices-list {
+                overflow-y: auto;
+                flex: 1;
+                min-height: 0;
+                max-height: none;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        /* Outstanding Amount Bar - Dark Theme */
+        .outstanding-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .outstanding-bar .label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .outstanding-bar .amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+        }
     </style>
 </head>
 <body>
     <div class="app-shell">
-    <!-- App Bar (Mobile) - Al Baron Brand -->
+    <!-- App Bar (Mobile) - Al Baron Brand with Filters -->
     <div class="appbar">
         <div class="container">
             <div class="appbar-inner">
-                <a class="appbar-title" href="/portal">لوحة التحكم</a>
+                <a class="appbar-title" href="/portal">
+                    <img src="/portal/logo.png" alt="ABS" style="height: 32px; width: auto;">
+                    <span>لوحة التحكم</span>
+                </a>
                 <div class="appbar-actions">
-                    <button id="installBtn" class="install-btn hidden" onclick="installApp()" aria-label="تحميل التطبيق">⬇️ حمل التطبيق</button>
                     <button class="btn btn-outline btn-icon" onclick="logout(); return false;" aria-label="تسجيل خروج">⎋</button>
+                </div>
+            </div>
+            <!-- Mobile Filter Bar -->
+            <div class="mobile-filter-bar">
+                <div class="mobile-filters">
+                    <input type="date" id="mobileFromDate" class="mobile-filter-input" placeholder="من">
+                    <input type="date" id="mobileToDate" class="mobile-filter-input" placeholder="إلى">
+                    <button class="mobile-filter-btn" onclick="applyMobileFilters()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -431,7 +1159,7 @@
         <div class="container">
             <div class="navbar-content">
                 <a href="/portal" class="navbar-brand">
-                    <span style="font-weight:800; color:var(--primary-color);">ABS</span>
+                    <img src="/portal/logo.png" alt="ABS" style="height: 36px; width: auto; margin-left: 8px;">
                     <span>لوحة التحكم</span>
                 </a>
                 
@@ -500,75 +1228,101 @@
                 </div>
             </div>
 
+            <!-- Outstanding Bar - Always visible sticky -->
+            <div class="outstanding-bar" id="outstandingBar" style="display: none;">
+                <span class="label">المبلغ المستحق</span>
+                <span class="amount" id="outstandingAmountBar">0</span>
+            </div>
+
             <!-- Dashboard Cards -->
-            <div class="dashboard-cards" id="dashboardCards">
-                <!-- Balance Card -->
+            <div class="dashboard-cards" id="dashboardCards" style="display: none;">
+                <!-- GL Balance Card (Net Balance from Ledger) -->
                 <div class="balance-card" id="balanceCard" style="display: none;">
-                    <div class="balance-amount" id="balanceAmount">0</div>
-                    <div class="balance-label">رصيدك الحالي</div>
-                    <div class="balance-details">
-                        <div class="detail-item">
-                            <div class="detail-value" id="creditLimit">0</div>
-                            <div class="detail-label">حد الائتمان</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-value" id="outstandingAmount">0</div>
-                            <div class="detail-label">الديون المستحقة</div>
-                        </div>
+                    <div class="balance-amount" id="glBalance">0</div>
+                    <div class="balance-label" id="balanceLabel">الرصيد</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.5rem;" id="balanceSubLabel">
+                        الرصيد الصافي من دفتر الأستاذ
                     </div>
                 </div>
 
-                <!-- Summary Cards -->
-                <div class="summary-card" id="summaryCard" style="display: none;">
-                    <div class="summary-title">
-                        <i class="fas fa-chart-line"></i>
-                        ملخص المعاملات
-                    </div>
-                    <div class="summary-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalInvoices">0</div>
-                            <div class="stat-label">عدد الفواتير</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="paidInvoices">0</div>
-                            <div class="stat-label">الفواتير المدفوعة</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="outstandingInvoices">0</div>
-                            <div class="stat-label">الفواتير المستحقة</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalPayments">0</div>
-                            <div class="stat-label">إجمالي المدفوعات</div>
-                        </div>
-                    </div>
+            </div>
+
+            <!-- Transactions List with Tabs -->
+            <div class="invoices-section" id="invoicesSection" style="display: none;">
+                <!-- Tabs -->
+                <div class="transaction-tabs">
+                    <button class="tab-btn active" id="invoicesTab" onclick="switchTab('invoices')">
+                        <span>📄</span>
+                        <span>الفواتير</span>
+                        <span class="tab-count" id="invoicesTabCount">0</span>
+                    </button>
+                    <button class="tab-btn" id="paymentsTab" onclick="switchTab('payments')">
+                        <span>💰</span>
+                        <span>المدفوعات</span>
+                        <span class="tab-count" id="paymentsTabCount">0</span>
+                    </button>
+                </div>
+                
+                <!-- List Container -->
+                <div class="invoices-list" id="transactionsList">
+                    <!-- Transactions will be loaded here -->
                 </div>
             </div>
 
-            <!-- Transactions Table -->
-            <div class="transactions-table" id="transactionsTable" style="display: none;">
-                <div class="table-header">
-                    <div class="table-title">
-                        <i class="fas fa-list"></i>
-                        سجل المعاملات المالية
+            <!-- Invoice Detail Modal -->
+            <div class="modal" id="invoiceModal">
+                <div class="modal-overlay" onclick="closeInvoiceModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button class="modal-close" onclick="closeInvoiceModal()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                        <h3 class="modal-title" id="modalInvoiceNumber">-</h3>
                     </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>التاريخ</th>
-                                <th>النوع</th>
-                                <th>الوصف</th>
-                                <th>المبلغ</th>
-                                <th>الحالة</th>
-                                <th>المتبقي</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsBody">
-                            <!-- Transactions will be loaded here -->
-                        </tbody>
-                    </table>
+                    <div class="modal-body">
+                        <div class="invoice-summary">
+                            <div class="invoice-summary-item">
+                                <span class="label">العميل</span>
+                                <span class="value" id="modalCustomerName">-</span>
+                            </div>
+                            <div class="invoice-summary-item">
+                                <span class="label">التاريخ</span>
+                                <span class="value" id="modalInvoiceDate">-</span>
+                            </div>
+                            <div class="invoice-summary-item">
+                                <span class="label">الإجمالي الكلي</span>
+                                <span class="value text-primary" id="modalTotalAmount">-</span>
+                            </div>
+                            <div class="invoice-summary-item">
+                                <span class="label">المستحق</span>
+                                <span class="value text-success" id="modalOutstanding">-</span>
+                            </div>
+                        </div>
+                        <div class="invoice-items-section">
+                            <h4 class="subsection-title">الأصناف</h4>
+                            <div class="items-table-container">
+                                <table class="items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>الصنف</th>
+                                            <th>الكمية</th>
+                                            <th>السعر</th>
+                                            <th>المجموع</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modalItemsBody">
+                                        <!-- Items will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeInvoiceModal()">إغلاق</button>
+                    </div>
                 </div>
             </div>
 
@@ -580,17 +1334,17 @@
             </div>
 
             <!-- Empty State -->
-            <div id="emptyState" style="display: none; text-align: center; padding: 3rem;">
+            <div id="emptyState" style="display: none; text-align: center; padding: 3rem; background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(148, 163, 184, 0.2); margin: 1rem 0;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
-                <h3 style="color: #64748b; margin-bottom: 0.5rem;">لا توجد بيانات مالية</h3>
-                <p style="color: #94a3b8;">لم يتم العثور على معاملات مالية في الفترة المحددة</p>
+                <h3 style="color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">لا توجد بيانات مالية</h3>
+                <p style="color: rgba(255, 255, 255, 0.6);">لم يتم العثور على معاملات مالية في الفترة المحددة</p>
             </div>
 
             <!-- Error State -->
-            <div id="errorState" style="display: none; text-align: center; padding: 3rem;">
+            <div id="errorState" style="display: none; text-align: center; padding: 3rem; background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(148, 163, 184, 0.2); margin: 1rem 0;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
-                <h3 style="color: #dc2626; margin-bottom: 0.5rem;">حدث خطأ</h3>
-                <p style="color: #94a3b8;">لم يتم تحميل البيانات المالية، يرجى المحاولة مرة أخرى</p>
+                <h3 style="color: #ef4444; margin-bottom: 0.5rem;">حدث خطأ</h3>
+                <p style="color: rgba(255, 255, 255, 0.6);">لم يتم تحميل البيانات المالية، يرجى المحاولة مرة أخرى</p>
                 <button class="btn btn-primary" onclick="loadDashboard()" style="margin-top: 1rem;">
                     <i class="fas fa-refresh"></i>
                     إعادة المحاولة
@@ -602,7 +1356,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/portal/common.js"></script>
+    <script src="/portal/common.js?v=4"></script>
     <script>
         // Override formatDate to ensure numbers-only format
         function formatDate(dateStr) {
@@ -626,6 +1380,8 @@
             transaction_type: '',
             invoice_status: ''
         };
+        let allTransactions = [];
+        let currentTab = 'invoices'; // 'invoices' or 'payments'
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -633,30 +1389,60 @@
             loadDashboard();
         });
 
-        // Set default dates (current month)
+        // Switch Tab (Invoices or Payments)
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update button styles
+            document.getElementById('invoicesTab').classList.toggle('active', tab === 'invoices');
+            document.getElementById('paymentsTab').classList.toggle('active', tab === 'payments');
+            
+            // Filter and display transactions
+            // API returns type as 'invoice' or 'payment' (singular), tabs are 'invoices'/'payments' (plural)
+            const apiType = tab === 'invoices' ? 'invoice' : 'payment';
+            const filtered = allTransactions.filter(t => t.type === apiType);
+            updateTransactionsList(filtered, 'SAR');
+        }
+
+        // Set default dates (last 30 days - one month before today)
         function setDefaultDates() {
             const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const oneMonthAgo = new Date(today);
+            oneMonthAgo.setDate(today.getDate() - 30);
             
-            document.getElementById('fromDate').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('toDate').value = today.toISOString().split('T')[0];
+            const fromDateStr = oneMonthAgo.toISOString().split('T')[0];
+            const toDateStr = today.toISOString().split('T')[0];
+            
+            // Desktop filters
+            document.getElementById('fromDate').value = fromDateStr;
+            document.getElementById('toDate').value = toDateStr;
+            
+            // Mobile filters
+            const mobileFrom = document.getElementById('mobileFromDate');
+            const mobileTo = document.getElementById('mobileToDate');
+            if (mobileFrom) mobileFrom.value = fromDateStr;
+            if (mobileTo) mobileTo.value = toDateStr;
         }
 
         // Load Dashboard Data
         async function loadDashboard() {
             showLoading();
-            
+
             try {
+                console.log('Loading dashboard with filters:', currentFilters);
                 const result = await apiCall('get_financial_dashboard', currentFilters);
-                
-                if (result.success) {
+                console.log('Dashboard API result:', result);
+
+                if (result && result.success) {
                     displayDashboard(result);
                 } else {
-                    showError(result.message || 'حدث خطأ أثناء تحميل البيانات');
+                    const errorMsg = result && result.message ? result.message : 'حدث خطأ أثناء تحميل البيانات';
+                    console.error('Dashboard API error:', errorMsg, result);
+                    showError(errorMsg);
                 }
             } catch (error) {
                 console.error('Dashboard Error:', error);
-                showError('فشل الاتصال بالخادم');
+                showError('فشل الاتصال بالخادم: ' + error.message);
             }
         }
 
@@ -664,116 +1450,187 @@
         function displayDashboard(data) {
             hideLoading();
             
-            // Update balance card
-            updateBalanceCard(data);
+            // Set currency from API
+            setCurrency(data.currency || 'SAR');
             
-            // Update summary card
-            updateSummaryCard(data);
+            // Store all transactions
+            allTransactions = data.transactions || [];
             
-            // Update transactions table
-            updateTransactionsTable(data.transactions || []);
+            // Update tab counts
+            const invoicesCount = data.invoices_count || 0;
+            const paymentsCount = data.payments_count || 0;
+            document.getElementById('invoicesTabCount').textContent = invoicesCount;
+            document.getElementById('paymentsTabCount').textContent = paymentsCount;
+            
+            // Display transactions based on current tab
+            // API returns type as 'invoice' or 'payment' (singular), tabs are 'invoices'/'payments' (plural)
+            const apiType = currentTab === 'invoices' ? 'invoice' : 'payment';
+            const filtered = allTransactions.filter(t => t.type === apiType);
+            updateTransactionsList(filtered, data.currency || 'SAR');
+            
+            // Update and show outstanding bar
+            const outstandingAmount = data.balance || 0;
+            document.getElementById('outstandingAmountBar').textContent = formatCurrency(outstandingAmount, data.currency || 'SAR');
+            document.getElementById('outstandingBar').style.display = 'flex';
             
             // Show all sections
-            document.getElementById('balanceCard').style.display = 'block';
-            document.getElementById('summaryCard').style.display = 'block';
-            document.getElementById('transactionsTable').style.display = 'block';
+            document.getElementById('invoicesSection').style.display = 'block';
         }
 
-        // Update Balance Card
-        function updateBalanceCard(data) {
-            const currency = data.currency || 'SAR';
-            document.getElementById('balanceAmount').textContent = formatCurrency(data.balance || 0, currency);
-            document.getElementById('creditLimit').textContent = formatCurrency(data.credit_limit || 0, currency);
-            document.getElementById('outstandingAmount').textContent = formatCurrency(data.outstanding_amount || 0, currency);
-        }
-
-        // Update Summary Card
-        function updateSummaryCard(data) {
-            const currency = data.currency || 'SAR';
-            // Show count of invoices (not the amount)
-            document.getElementById('totalInvoices').textContent = data.total_invoices || '0';
-            document.getElementById('paidInvoices').textContent = formatCurrency(data.paid_invoices || 0, currency);
-            document.getElementById('outstandingInvoices').textContent = formatCurrency(data.outstanding_invoices || 0, currency);
-            document.getElementById('totalPayments').textContent = formatCurrency(data.total_payments || 0, currency);
-        }
-
-        // Update Transactions Table
-        function updateTransactionsTable(transactions) {
-            const tbody = document.getElementById('transactionsBody');
-            tbody.innerHTML = '';
+        // Update Transactions List (both invoices and payments)
+        function updateTransactionsList(transactions, currency) {
+            const container = document.getElementById('transactionsList');
+            container.innerHTML = '';
             
             if (transactions.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">
-                            لا توجد معاملات في هذه الفترة
-                        </td>
-                    </tr>
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #64748b;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+                        <p>لا توجد معاملات في هذه الفترة</p>
+                    </div>
                 `;
                 return;
             }
             
             transactions.forEach(transaction => {
-                const row = document.createElement('tr');
+                const item = document.createElement('div');
+                item.className = 'invoice-item';
                 
-                // Add expandable icon for invoices
-                const expandIcon = transaction.type === 'invoice' ? 
-                    '<span class="expandable-icon">▼</span>' : '';
+                // Extract number from description
+                const itemNumber = transaction.description.split('#')[1] || transaction.description;
+                const statusClass = getStatusClass(transaction.status);
+                const statusLabel = getStatusLabel(transaction.status);
                 
-                row.innerHTML = `
-                    <td>${formatDate(transaction.date)}${expandIcon}</td>
-                    <td>
-                        <span class="transaction-type ${transaction.type === 'invoice' ? 'type-invoice' : 'type-payment'}">
-                            ${transaction.type === 'invoice' ? 'فاتورة' : 'دفع'}
-                        </span>
-                    </td>
-                    <td>${transaction.description}</td>
-                    <td class="amount">${formatCurrency(transaction.amount, transaction.currency)}</td>
-                    <td>
-                        <span class="status-badge ${getStatusClass(transaction.status)}">
-                            ${getStatusLabel(transaction.status)}
-                        </span>
-                    </td>
-                    <td class="amount">${formatCurrency(transaction.outstanding || 0, transaction.currency)}</td>
+                // Different display for invoices vs payments
+                const isInvoice = transaction.type === 'invoice';
+                const icon = isInvoice ? '📄' : '💰';
+                
+                // Use the transaction's own currency from ERPNext
+                const transCurrency = transaction.currency || currency;
+                
+                // Format date as numbers only (YYYY-MM-DD)
+                const dateNum = transaction.date ? transaction.date.split(' ')[0] : '-';
+
+                item.innerHTML = `
+                    <div class="invoice-number">${icon} ${dateNum}</div>
+                    <div class="invoice-date">${itemNumber}</div>
+                    <div class="invoice-amount">${formatCurrency(transaction.amount, transCurrency)}</div>
+                    <div class="invoice-remaining">${isInvoice ? formatCurrency(transaction.outstanding || 0, transCurrency) : '-'}</div>
+                    <span class="invoice-status ${statusClass}">${statusLabel}</span>
                 `;
                 
-                // Add click handler for invoice details
-                if (transaction.type === 'invoice') {
-                    row.style.cursor = 'pointer';
-                    row.addEventListener('click', (e) => {
-                        // Don't toggle if clicking on other elements
-                        if (e.target.tagName !== 'TD' && !e.target.closest('.transaction-type') && !e.target.closest('.status-badge')) {
-                            return;
-                        }
-                        toggleInvoiceDetails(row, transaction);
+                // Click handler to open modal (only for invoices)
+                if (isInvoice) {
+                    item.addEventListener('click', () => {
+                        openInvoiceModal(transaction, currency);
                     });
+                    item.style.cursor = 'pointer';
+                } else {
+                    item.style.cursor = 'default';
                 }
                 
-                tbody.appendChild(row);
-                
-                // Add details row for invoices
-                if (transaction.type === 'invoice') {
-                    const detailsRow = document.createElement('tr');
-                    detailsRow.innerHTML = `
-                        <td colspan="6" style="padding: 0; border: none;">
-                            <div class="invoice-details" style="display: none; padding: 1rem; background: #f8fafc; border-left: 3px solid #1e3a8a;">
-                                <div style="font-weight: 600; margin-bottom: 0.5rem;">الأصناف:</div>
-                                <div id="invoice-items-${transaction.description.split('#')[1]}" style="margin-bottom: 1rem;">
-                                    <div style="text-align: center; padding: 1rem; color: #64748b;">
-                                        <div class="spinner-border spinner-border-sm" role="status">
-                                            <span class="sr-only">Loading...</span>
-                                        </div>
-                                        جاري تحميل الأصناف...
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    `;
-                    detailsRow.className = 'invoice-details-row';
-                    tbody.appendChild(detailsRow);
-                }
+                container.appendChild(item);
             });
         }
+        
+        // Open Invoice Modal
+        async function openInvoiceModal(invoice, globalCurrency) {
+            const modal = document.getElementById('invoiceModal');
+            const invoiceNumber = invoice.description.split('#')[1] || invoice.description;
+            
+            // Use the invoice's own currency from ERPNext, fallback to global
+            const invoiceCurrency = invoice.currency || globalCurrency;
+            
+            // Set basic info
+            document.getElementById('modalInvoiceNumber').textContent = invoiceNumber;
+            document.getElementById('modalInvoiceDate').textContent = formatDate(invoice.date);
+            document.getElementById('modalTotalAmount').textContent = formatCurrency(invoice.amount, invoiceCurrency);
+            document.getElementById('modalOutstanding').textContent = formatCurrency(invoice.outstanding || 0, invoiceCurrency);
+            
+            // Show modal with loading state
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Load customer name and items
+            const itemsBody = document.getElementById('modalItemsBody');
+            itemsBody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem;">
+                        <div class="spinner" style="width: 32px; height: 32px; margin: 0 auto 1rem;"></div>
+                        <p style="color: #64748b;">جاري تحميل التفاصيل...</p>
+                    </td>
+                </tr>
+            `;
+            
+            try {
+                const result = await apiCall('get_invoice_details', { invoice_name: invoiceNumber });
+                
+                if (result.success && result.invoice) {
+                    // Set customer name
+                    document.getElementById('modalCustomerName').textContent = result.invoice.customer_name || '-';
+                    
+                    // Use currency directly from ERPNext invoice document (not global)
+                    const docCurrency = result.invoice.currency || invoiceCurrency;
+                    
+                    // Update totals with the actual invoice currency from ERPNext
+                    document.getElementById('modalTotalAmount').textContent = formatCurrency(result.invoice.grand_total, docCurrency);
+                    document.getElementById('modalOutstanding').textContent = formatCurrency(result.invoice.outstanding_amount || 0, docCurrency);
+                    
+                    // Display items with invoice's own currency from ERPNext
+                    if (result.invoice.items && result.invoice.items.length > 0) {
+                        itemsBody.innerHTML = result.invoice.items.map(item => `
+                            <tr>
+                                <td>${item.item_name}</td>
+                                <td style="text-align: center;">${item.qty}</td>
+                                <td style="text-align: center; direction: ltr;">${formatCurrency(item.rate, docCurrency)}</td>
+                                <td style="text-align: center; direction: ltr; font-weight: 600;">${formatCurrency(item.amount, docCurrency)}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        itemsBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">
+                                    لا توجد أصناف في هذه الفاتورة
+                                </td>
+                            </tr>
+                        `;
+                    }
+                } else {
+                    document.getElementById('modalCustomerName').textContent = '-';
+                    itemsBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 2rem; color: #dc2626;">
+                                لم يتم العثور على تفاصيل الفاتورة
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading invoice details:', error);
+                document.getElementById('modalCustomerName').textContent = '-';
+                itemsBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: #dc2626;">
+                            حدث خطأ أثناء تحميل التفاصيل
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // Close Invoice Modal
+        function closeInvoiceModal() {
+            const modal = document.getElementById('invoiceModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeInvoiceModal();
+            }
+        });
 
         // Get status class
         function getStatusClass(status) {
@@ -841,7 +1698,7 @@
                     displayInvoiceItems(itemsContainer, result.invoice.items, result.invoice.currency);
                 } else {
                     itemsContainer.innerHTML = `
-                        <div style="text-align: center; padding: 1rem; color: #dc3545;">
+                        <div style="text-align: center; padding: 1rem; color: #ef4444;">
                             <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚠️</div>
                             <div>لم يتم العثور على أصناف لهذه الفاتورة</div>
                         </div>
@@ -851,7 +1708,7 @@
                 console.error('Error loading invoice items:', error);
                 const itemsContainer = document.getElementById(`invoice-items-${invoiceNumber}`);
                 itemsContainer.innerHTML = `
-                    <div style="text-align: center; padding: 1rem; color: #dc3545;">
+                    <div style="text-align: center; padding: 1rem; color: #ef4444;">
                         <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">❌</div>
                         <div>حدث خطأ أثناء تحميل الأصناف</div>
                     </div>
@@ -859,11 +1716,11 @@
             }
         }
 
-        // Display invoice items
+        // Display invoice items - Dark Theme
         function displayInvoiceItems(container, items, currency = 'SAR') {
             if (!items || items.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 1rem; color: #64748b;">
+                    <div style="text-align: center; padding: 1rem; color: rgba(255, 255, 255, 0.6);">
                         <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📦</div>
                         <div>لا توجد أصناف في هذه الفاتورة</div>
                     </div>
@@ -872,8 +1729,8 @@
             }
 
             let itemsHtml = `
-                <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; padding: 0.75rem; background: #f1f5f9; font-weight: 600; border-bottom: 1px solid #e2e8f0;">
+                <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.2);">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); font-weight: 600; border-bottom: 1px solid rgba(148, 163, 184, 0.2); color: rgba(255, 255, 255, 0.9);">
                         <div>الصنف</div>
                         <div style="text-align: center;">الكمية</div>
                         <div style="text-align: center;">السعر</div>
@@ -883,14 +1740,14 @@
 
             items.forEach(item => {
                 itemsHtml += `
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; padding: 0.75rem; border-bottom: 1px solid #f1f5f9; align-items: center;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; padding: 0.75rem; border-bottom: 1px solid rgba(148, 163, 184, 0.1); align-items: center; color: rgba(255, 255, 255, 0.8);">
                         <div>
-                            <div style="font-weight: 500; color: #1e293b;">${item.item_name}</div>
-                            <div style="font-size: 0.875rem; color: #64748b;">${item.item_code}</div>
+                            <div style="font-weight: 500; color: white;">${item.item_name}</div>
+                            <div style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">${item.item_code}</div>
                         </div>
                         <div style="text-align: center;">${item.qty}</div>
                         <div style="text-align: center;">${formatCurrency(item.rate, currency)}</div>
-                        <div style="text-align: center; font-weight: 600; color: #1e3a8a;">${formatCurrency(item.amount, currency)}</div>
+                        <div style="text-align: center; font-weight: 600; color: #93c5fd;">${formatCurrency(item.amount, currency)}</div>
                     </div>
                 `;
             });
@@ -934,6 +1791,24 @@
             loadDashboard();
         }
 
+        // Apply Mobile Filters (from AppBar)
+        function applyMobileFilters() {
+            const fromDate = document.getElementById('mobileFromDate').value;
+            const toDate = document.getElementById('mobileToDate').value;
+            
+            // Sync with desktop filters
+            document.getElementById('fromDate').value = fromDate;
+            document.getElementById('toDate').value = toDate;
+            
+            currentFilters = {
+                from_date: fromDate,
+                to_date: toDate,
+                transaction_type: '',
+                invoice_status: ''
+            };
+            loadDashboard();
+        }
+
         // Reset Filters
         function resetFilters() {
             setDefaultDates();
@@ -951,9 +1826,9 @@
         // Loading States
         function showLoading() {
             document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('balanceCard').style.display = 'none';
-            document.getElementById('summaryCard').style.display = 'none';
-            document.getElementById('transactionsTable').style.display = 'none';
+            document.getElementById('dashboardCards').style.display = 'none';
+            document.getElementById('outstandingBar').style.display = 'none';
+            document.getElementById('invoicesSection').style.display = 'none';
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('errorState').style.display = 'none';
         }
@@ -964,9 +1839,9 @@
 
         function showError(message) {
             hideLoading();
-            document.getElementById('balanceCard').style.display = 'none';
-            document.getElementById('summaryCard').style.display = 'none';
-            document.getElementById('transactionsTable').style.display = 'none';
+            document.getElementById('dashboardCards').style.display = 'none';
+            document.getElementById('outstandingBar').style.display = 'none';
+            document.getElementById('invoicesSection').style.display = 'none';
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('errorState').style.display = 'block';
             

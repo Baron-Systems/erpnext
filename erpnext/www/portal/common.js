@@ -57,27 +57,55 @@ async function ensureCsrfToken() {
 
     // 1) Try cookie (if present)
     const fromCookie = getCsrfToken();
+    console.log('CSRF from cookie:', fromCookie ? 'found' : 'not found');
     if (fromCookie) {
         portalCsrfToken = fromCookie;
         return portalCsrfToken;
     }
 
-    // 2) Ask server (works when logged in; safe even for Guest)
+    // 2) Try portal CSRF endpoint (allows guest)
     try {
+        console.log('Trying portal CSRF endpoint...');
+        const r = await fetch('/api/method/erpnext.www.portal.api.portal_get_csrf_token', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        console.log('Portal CSRF response status:', r.status);
+        if (r.ok) {
+            const j = await r.json();
+            console.log('Portal CSRF response:', j);
+            // Frappe wraps return in message
+            if (j && j.message) {
+                portalCsrfToken = j.message;
+                console.log('Got CSRF token from portal endpoint');
+                return portalCsrfToken;
+            }
+        }
+    } catch (e) {
+        console.log('Portal CSRF endpoint failed:', e);
+    }
+
+    // 3) Fallback: try standard endpoint
+    try {
+        console.log('Trying standard CSRF endpoint...');
         const r = await fetch('/api/method/frappe.sessions.get_csrf_token', {
             method: 'GET',
             credentials: 'same-origin'
         });
-        const j = await r.json();
-        // Frappe wraps return in message
-        if (j && j.message) {
-            portalCsrfToken = j.message;
-            return portalCsrfToken;
+        console.log('Standard CSRF response status:', r.status);
+        if (r.ok) {
+            const j = await r.json();
+            console.log('Standard CSRF response:', j);
+            if (j && j.message) {
+                portalCsrfToken = j.message;
+                return portalCsrfToken;
+            }
         }
     } catch (e) {
-        // ignore
+        console.log('Standard CSRF endpoint failed:', e);
     }
 
+    console.warn('Could not get CSRF token from any source');
     return '';
 }
 
@@ -117,13 +145,22 @@ async function apiCall(method, data = {}, useAuth = false) {
             credentials: 'same-origin',
             body: forceGet ? undefined : JSON.stringify(data)
         });
-        
+
+        if (!response.ok) {
+            console.error('HTTP Error:', response.status, response.statusText);
+            return {
+                success: false,
+                message: 'خطأ في الاتصال بالخادم: ' + response.status
+            };
+        }
+
         const result = await response.json();
-        
+        console.log('API Response:', url, result);
+
         if (result.message) {
             return result.message;
         }
-        
+
         return result;
         
     } catch (error) {
@@ -140,9 +177,24 @@ function getCsrfToken() {
     if (typeof frappe !== 'undefined' && frappe.csrf_token) {
         return frappe.csrf_token;
     }
-    
-    const match = document.cookie.match(/csrf_token=([^;]+)/);
-    return match ? match[1] : '';
+
+    // Check all possible CSRF cookie names
+    const patterns = [
+        /csrf_token=([^;]+)/,
+        /CSRF Token=([^;]+)/i,
+        /X-Frappe-CSRF-Token=([^;]+)/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = document.cookie.match(pattern);
+        if (match && match[1]) {
+            return decodeURIComponent(match[1]);
+        }
+    }
+
+    // Debug: log all cookies
+    console.log('All cookies:', document.cookie);
+    return '';
 }
 
 // ============== Loading States ==============
@@ -228,6 +280,52 @@ function showToast(message, type = 'info', timeoutMs = 3500) {
     }, timeoutMs);
 }
 
+// Toast notification system
+function showToast(message, type = 'info', duration = 3000) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = {
+        success: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>',
+        error: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+        warning: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+        info: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+    };
+    
+    const titles = {
+        success: 'نجاح',
+        error: 'خطأ',
+        warning: 'تنبيه',
+        info: 'معلومة'
+    };
+    
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-content">
+            <div class="toast-title">${titles[type] || 'معلومة'}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Remove after duration
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
 function showSuccess(message) { showToast(message, 'success'); }
 function showError(message) { showToast(message, 'error'); }
 function showInfo(message) { showToast(message, 'info'); }
@@ -263,8 +361,8 @@ let portalCurrency = 'SAR';
 const PORTAL_LOCALE = 'ar-SA-u-nu-latn';
 
 function setCurrency(currency) {
-    // Force SAR to fix currency inconsistency
-    portalCurrency = 'SAR';
+    // Use provided currency, fallback to SAR
+    portalCurrency = currency || 'SAR';
 }
 
 function formatCurrency(amount, currency = null) {
@@ -282,13 +380,14 @@ function formatCurrency(amount, currency = null) {
         'KWD': 'د.ك',
         'BHD': 'د.ب',
         'OMR': 'ر.ع',
-        'EGP': 'ج.م'
+        'EGP': 'ج.م',
+        'ILS': '₪'
     };
     
     const symbol = currencySymbols[curr] || curr;
     
-    // For Arabic, place symbol after number (like ERPNext)
-    if (curr === 'SAR' || curr === 'AED' || curr === 'QAR' || curr === 'KWD' || curr === 'BHD' || curr === 'OMR' || curr === 'EGP') {
+    // For Arabic/Hebrew, place symbol after number (like ERPNext)
+    if (curr === 'SAR' || curr === 'AED' || curr === 'QAR' || curr === 'KWD' || curr === 'BHD' || curr === 'OMR' || curr === 'EGP' || curr === 'ILS') {
         return `${num} ${symbol}`;
     }
     
