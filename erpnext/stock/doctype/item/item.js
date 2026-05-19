@@ -1123,6 +1123,15 @@ frappe.ui.form.on("UOM Conversion Detail", {
 	},
 });
 
+frappe.ui.form.on("child item price", {
+	table_orim_add: function (frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		row.rate = frm.doc.standard_rate || 0;
+		row.uom = frm.doc.stock_uom;
+		frm.refresh_field("table_orim");
+	},
+});
+
 frappe.tour["Item"] = [
 	{
 		fieldname: "item_code",
