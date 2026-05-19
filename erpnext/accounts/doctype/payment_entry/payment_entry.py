@@ -659,15 +659,23 @@ class PaymentEntry(AccountsController):
 
 				ref_doc = frappe.get_lazy_doc(d.reference_doctype, d.reference_name)
 
-				if d.reference_doctype != "Journal Entry":
-					if self.party != ref_doc.get(scrub(self.party_type)):
+				if d.reference_doctype == "Journal Entry":
+					self.validate_journal_entry()
+				elif d.reference_doctype == "Payment Entry":
+					# Payment Entry uses party/party_type fields instead of direct customer/supplier fields
+					if self.party != ref_doc.party or self.party_type != ref_doc.party_type:
 						frappe.throw(
 							_("{0} {1} is not associated with {2} {3}").format(
 								_(d.reference_doctype), d.reference_name, _(self.party_type), self.party
 							)
 						)
 				else:
-					self.validate_journal_entry()
+					if self.party != ref_doc.get(scrub(self.party_type)):
+						frappe.throw(
+							_("{0} {1} is not associated with {2} {3}").format(
+								_(d.reference_doctype), d.reference_name, _(self.party_type), self.party
+							)
+						)
 
 				if d.reference_doctype in frappe.get_hooks("invoice_doctypes"):
 					if self.party_type == "Customer":
@@ -1011,7 +1019,7 @@ class PaymentEntry(AccountsController):
 			self.append('references', {
 				"reference_doctype": inv.voucher_type,
 				"reference_name": inv.voucher_no,
-				"due_date": inv.due_date,
+				"due_date": inv.due_date or inv.posting_date,
 				"total_amount": inv.invoice_amount,
 				"outstanding_amount": inv.outstanding_amount,
 				"allocated_amount": allocated,
