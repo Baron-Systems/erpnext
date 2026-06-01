@@ -45,9 +45,8 @@ class AccountsSettings(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.accounts.doctype.repost_allowed_types.repost_allowed_types import RepostAllowedTypes
+		from frappe.types import DF
 
 		add_taxes_from_item_tax_template: DF.Check
 		add_taxes_from_taxes_and_charges_template: DF.Check

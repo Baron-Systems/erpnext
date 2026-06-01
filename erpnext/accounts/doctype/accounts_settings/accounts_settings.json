@@ -291,7 +291,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
+   "default": "1",
    "description": "Learn about <a href=\"https://docs.frappe.io/erpnext/user/manual/en/common_party_accounting\" rel=\"noopener noreferrer\">Common Party</a>",
    "fieldname": "enable_common_party_accounting",
    "fieldtype": "Check",
@@ -711,7 +711,6 @@
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 0,
  "icon": "icon-cog",
  "idx": 1,
  "index_web_pages_for_search": 1,

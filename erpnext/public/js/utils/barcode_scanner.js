@@ -124,10 +124,26 @@ erpnext.utils.BarcodeScanner = class BarcodeScanner {
 				}
 
 				// add new row if new item/batch is scanned
+				// Add at end to get highest idx, then move to top (reverse numbering)
 				row = frappe.model.add_child(this.frm.doc, cur_grid.doctype, this.items_table_name);
+				// Move the new row to the beginning of the array (top of grid)
+				let child_table = this.frm.doc[this.items_table_name];
+				let new_row_data = child_table.pop(); // Remove from end
+				child_table.unshift(new_row_data); // Add to beginning
+				// Renumber in reverse: top row gets highest number, bottom gets 1
+				child_table.forEach((r, index) => {
+					r.idx = child_table.length - index;
+				});
 				// trigger any row add triggers defined on child table.
 				this.frm.script_manager.trigger(`${this.items_table_name}_add`, row.doctype, row.name);
 				this.frm.has_items = false;
+				// Refresh grid and update row numbers (lightweight)
+				cur_grid.refresh();
+				cur_grid.grid_rows.forEach(r => {
+					if (r && r.doc && r.doc.name !== row.name && r.set_row_index) {
+						r.set_row_index();
+					}
+				});
 			}
 
 			if (this.is_duplicate_serial_no(row, serial_no)) {
