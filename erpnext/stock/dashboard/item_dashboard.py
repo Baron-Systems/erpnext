@@ -19,11 +19,12 @@ def get_data(
 		filters.append(["warehouse", "=", warehouse])
 	if item_group:
 		lft, rgt = frappe.db.get_value("Item Group", item_group, ["lft", "rgt"])
+		# Optimized: Use INNER JOIN instead of EXISTS for better performance
 		items = frappe.db.sql_list(
 			"""
-			select i.name from `tabItem` i
-			where exists(select name from `tabItem Group`
-				where name=i.item_group and lft >=%s and rgt<=%s)
+			SELECT i.name FROM `tabItem` i
+			INNER JOIN `tabItem Group` ig ON i.item_group = ig.name
+			WHERE ig.lft >= %s AND ig.rgt <= %s
 		""",
 			(lft, rgt),
 		)
@@ -65,17 +66,31 @@ def get_data(
 	warehouse_list = [warehouse] if warehouse else [i.warehouse for i in items]
 
 	sre_reserved_stock_details = get_reserved_stock_details(item_code_list, warehouse_list)
-	precision = cint(frappe.db.get_single_value("System Settings", "float_precision"))
+	# Cache precision to avoid repeated DB calls
+	precision = cint(frappe.cache().get_value("float_precision") or 
+		frappe.db.get_single_value("System Settings", "float_precision"))
+
+	# Optimized: Fetch all Item details in one query instead of 3-4 queries per row
+	if items:
+		item_codes = list(set([i.item_code for i in items]))
+		item_details = frappe.db.get_all(
+			"Item",
+			filters={"name": ["in", item_codes]},
+			fields=["name", "item_name", "stock_uom", "has_batch_no", "has_serial_no"]
+		)
+		item_map = {i.name: i for i in item_details}
+	else:
+		item_map = {}
 
 	for item in items:
+		item_info = item_map.get(item.item_code, {})
 		item.update(
 			{
 				"item_code": escape_html(item.item_code),
-				"item_name": escape_html(frappe.get_cached_value("Item", item.item_code, "item_name")),
-				"stock_uom": escape_html(frappe.get_cached_value("Item", item.item_code, "stock_uom")),
+				"item_name": escape_html(item_info.get("item_name", "")),
+				"stock_uom": escape_html(item_info.get("stock_uom", "")),
 				"warehouse": escape_html(item.warehouse),
-				"disable_quick_entry": frappe.get_cached_value("Item", item.item_code, "has_batch_no")
-				or frappe.get_cached_value("Item", item.item_code, "has_serial_no"),
+				"disable_quick_entry": item_info.get("has_batch_no") or item_info.get("has_serial_no"),
 				"projected_qty": flt(item.projected_qty, precision),
 				"reserved_qty": flt(item.reserved_qty, precision),
 				"reserved_qty_for_production": flt(item.reserved_qty_for_production, precision),
