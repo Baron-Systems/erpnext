@@ -11,7 +11,7 @@
  "icon": "setting",
  "idx": 0,
  "is_hidden": 0,
- "label": "ERPNext Settings",
+ "label": "ERP ABS Settings",
  "links": [
   {
    "dependencies": "",
@@ -69,10 +69,10 @@
    "type": "Link"
   }
  ],
- "modified": "2026-01-09 13:05:08.007297",
+ "modified": "2026-06-02 03:41:22.543783",
  "modified_by": "Administrator",
  "module": "Setup",
- "name": "ERPNext Settings",
+ "name": "ERP ABS Settings",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -128,6 +128,6 @@
    "type": "DocType"
   }
  ],
- "title": "ERPNext Settings",
+ "title": "ERP ABS Settings",
  "type": "Workspace"
 }

@@ -292,7 +292,6 @@
   },
   {
    "default": "1",
-   "description": "Learn about <a href=\"https://docs.frappe.io/erpnext/user/manual/en/common_party_accounting\" rel=\"noopener noreferrer\">Common Party</a>",
    "fieldname": "enable_common_party_accounting",
    "fieldtype": "Check",
    "label": "Enable Common Party Accounting"
@@ -716,7 +715,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-18 12:16:33.679345",
+ "modified": "2026-06-02 11:29:07.573365",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Accounts Settings",
