@@ -31,6 +31,7 @@ class POSProfile(Document):
 		action_on_new_invoice: DF.Literal[
 			"Always Ask", "Save Changes and Load New Invoice", "Discard Changes and Load New Invoice"
 		]
+		allow_customer_payment: DF.Check
 		allow_discount_change: DF.Check
 		allow_partial_payment: DF.Check
 		allow_rate_change: DF.Check

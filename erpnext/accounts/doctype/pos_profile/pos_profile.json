@@ -41,6 +41,7 @@
   "column_break_23",
   "apply_discount_on",
   "allow_partial_payment",
+  "allow_customer_payment",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -451,6 +452,13 @@
    "fieldname": "allow_partial_payment",
    "fieldtype": "Check",
    "label": "Allow Partial Payment"
+  },
+  {
+   "default": "0",
+   "description": "Show customer payment button in cart to accept payments from customers to their wallet",
+   "fieldname": "allow_customer_payment",
+   "fieldtype": "Check",
+   "label": "Allow Customer Payment"
   },
   {
    "fieldname": "column_break_tvls",
