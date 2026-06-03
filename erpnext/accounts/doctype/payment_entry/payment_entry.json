@@ -159,6 +159,7 @@
    "options": "Cost Center"
   },
   {
+   "default": "\u0646\u0642\u062f\u064a",
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
    "label": "Mode of Payment",
@@ -805,7 +806,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2026-06-03 14:20:21.491030",
+ "modified": "2026-06-03 23:11:30.493588",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
