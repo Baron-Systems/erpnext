@@ -57073,5 +57073,5 @@ msgid "Selling"
 msgstr "المبيعات"
 
 msgid "Minimum quantity"
-msgstr "مخزون الامان"
+msgstr "كمية الحد الادنى"
   
