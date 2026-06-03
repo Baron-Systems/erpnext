@@ -19,15 +19,16 @@
   "column_break0",
   "disabled",
   "is_stock_item",
+  "minimum_quantity",
   "is_fixed_asset",
   "auto_create_assets",
   "is_grouped_asset",
+  "allow_alternative_item",
+  "has_variants",
   "asset_category",
   "asset_naming_series",
   "sb_barcodes",
   "barcodes",
-  "allow_alternative_item",
-  "has_variants",
   "section_break_gjns",
   "standard_rate",
   "column_break_ixrh",
@@ -45,7 +46,6 @@
   "pricing_tab",
   "\u0633\u0639\u0631_\u0627\u0644\u0635\u0646\u0641_\u064a\u0645\u0643\u0646_\u0627\u0644\u0627\u0633\u062a\u062e\u062f\u0627\u0645_\u0628\u0639\u062f_\u062d\u0641\u0638_\u0627\u0644\u0635\u0646\u0641_section",
   "table_orim",
-  "dashboard_tab",
   "inventory_section",
   "inventory_valuation_section",
   "valuation_method",
@@ -135,7 +135,13 @@
   "customer_code",
   "column_break_vipt",
   "default_manufacturer_part_no",
-  "default_item_manufacturer"
+  "default_item_manufacturer",
+  "stock_levels_html",
+  "uom_tab",
+  "stock_levels_section",
+  "uom_conversion_details_column",
+  "uom_help_html",
+  "dashboard_tab"
  ],
  "fields": [
   {
@@ -948,9 +954,9 @@
    "label": "Pricing"
   },
   {
-   "fieldname": "سعر_الصنف_يمكن_الاستخدام_بعد_حفظ_الصنف_section",
+   "fieldname": "\u0633\u0639\u0631_\u0627\u0644\u0635\u0646\u0641_\u064a\u0645\u0643\u0646_\u0627\u0644\u0627\u0633\u062a\u062e\u062f\u0627\u0645_\u0628\u0639\u062f_\u062d\u0641\u0638_\u0627\u0644\u0635\u0646\u0641_section",
    "fieldtype": "Section Break",
-   "label": " سعر الصنف (يمكن الاستخدام بعد حفظ الصنف) "
+   "label": " \u0633\u0639\u0631 \u0627\u0644\u0635\u0646\u0641 (\u064a\u0645\u0643\u0646 \u0627\u0644\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0628\u0639\u062f \u062d\u0641\u0638 \u0627\u0644\u0635\u0646\u0641) "
   },
   {
    "fieldname": "table_orim",
@@ -1060,16 +1066,9 @@
    "options": "<div id=\"stock-levels-placeholder\"></div>"
   },
   {
-   "fieldname": "section_break_wfkx",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "section_break_ylma",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "uom_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "UOM"
   },
   {
@@ -1089,13 +1088,11 @@
    "options": "<div style=\"margin-bottom:10px; color: var(--gray-500) !important;\">Define alternate units for this item. Eg: 1 Box = 12 Nos, set conversion factor as 12. (Will also apply for variants) <a href=\"https://docs.frappe.io/erpnext/uom\" target=\"_blank\">Learn more &#8594;</a></div>"
   },
   {
-   "fieldname": "section_break_zlmj",
-   "fieldtype": "Section Break",
-   "label": "Item Attributes"
-  },
-  {
-   "fieldname": "column_break_kpmi",
-   "fieldtype": "Column Break"
+   "fieldname": "minimum_quantity",
+   "fieldtype": "Int",
+   "in_standard_filter": 1,
+   "label": " Minimum quantity ",
+   "non_negative": 1
   }
  ],
  "icon": "fa fa-tag",
@@ -1103,7 +1100,7 @@
  "image_field": "image",
  "links": [],
  "make_attachments_public": 1,
- "modified": "2026-05-26 10:18:46.862670",
+ "modified": "2026-06-02 15:22:24.595527",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item",

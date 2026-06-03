@@ -82,6 +82,7 @@ class Item(Document):
 		brand: DF.Link | None
 		country_of_origin: DF.Link | None
 		create_new_batch: DF.Check
+		customer: DF.Link | None
 		customer_code: DF.SmallText | None
 		customer_items: DF.Table[ItemCustomerDetail]
 		customs_tariff_number: DF.Link | None
@@ -119,6 +120,7 @@ class Item(Document):
 		lead_time_days: DF.Int
 		max_discount: DF.Float
 		min_order_qty: DF.Float
+		minimum_quantity: DF.Int
 		naming_series: DF.Literal["STO-ITEM-.YYYY.-"]
 		no_of_months: DF.Int
 		no_of_months_exp: DF.Int
