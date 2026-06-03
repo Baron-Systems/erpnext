@@ -57072,3 +57072,6 @@ msgstr "مدير الحسابات"
 msgid "Selling"
 msgstr "المبيعات"
 
+msgid "Minimum quantity"
+msgstr "مخزون الامان"
+  
